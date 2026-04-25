@@ -1,0 +1,34 @@
+# ── Credentials & secrets ────────────────────────────────────
+.env
+.streamlit/secrets.toml
+
+# ── Generated files ───────────────────────────────────────────
+invoices/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ── One-time fix scripts (not part of project) ────────────────
+fix_base_tag.py
+fix_invoice.py
+fix_invoice_display.py
+test_invoice.py
+
+# ── Python & IDE ──────────────────────────────────────────────
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+
+# ── VS Code ───────────────────────────────────────────────────
+.vscode/
+
+# ── OS files ──────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
