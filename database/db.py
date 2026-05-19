@@ -1,5 +1,6 @@
 """
 database/db.py — MySQL connection helpers for Aurus Jewels
+Supports local (no SSL) and Aiven cloud (SSL required) automatically.
 """
 import mysql.connector
 from mysql.connector import pooling
@@ -11,24 +12,42 @@ import config
 
 _pool = None
 
+def _build_pool_kwargs() -> dict:
+    """Build connection kwargs — adds SSL when connecting to Aiven cloud."""
+    kwargs = dict(
+        pool_name  = "aurus_pool",
+        pool_size  = 5,
+        host       = config.DB_HOST,
+        port       = config.DB_PORT,
+        user       = config.DB_USER,
+        password   = config.DB_PASSWORD,
+        database   = config.DB_NAME,
+        charset    = "utf8mb4",
+        collation  = "utf8mb4_unicode_ci",
+        autocommit = False,
+    )
+    # If NOT localhost → Aiven cloud → SSL required
+    if config.DB_HOST and config.DB_HOST != "localhost":
+        # Check if ca.pem exists in project root
+        ca_path = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), "ca.pem"
+        )
+        if os.path.exists(ca_path):
+            kwargs["ssl_ca"]       = ca_path
+            kwargs["ssl_verify_cert"] = True
+        else:
+            # Streamlit Cloud: no ca.pem file → use ssl_disabled=False
+            kwargs["ssl_disabled"] = False
+    return kwargs
+
+
 def _get_pool():
     global _pool
     if _pool is None:
         try:
-            _pool = pooling.MySQLConnectionPool(
-                pool_name    = "aurus_pool",
-                pool_size    = 5,
-                host         = config.DB_HOST,
-                port         = config.DB_PORT,
-                user         = config.DB_USER,
-                password     = config.DB_PASSWORD,
-                database     = config.DB_NAME,
-                charset      = "utf8mb4",
-                collation    = "utf8mb4_unicode_ci",
-                autocommit   = False,
-            )
+            _pool = pooling.MySQLConnectionPool(**_build_pool_kwargs())
         except Exception as e:
-            st.error(f"⚠️ Database connection failed: {e}")
+            st.error(f"Database connection failed: {e}")
             return None
     return _pool
 
